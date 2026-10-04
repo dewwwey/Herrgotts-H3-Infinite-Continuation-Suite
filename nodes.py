@@ -363,6 +363,24 @@ def _continuation_condition_values(keyframes, refs, frame_count, runtime_mode):
     return values
 
 
+class H3ContinuousHandoverStub:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {},
+        }
+    RETURN_TYPES = ("H3_CONTINUOUS_HANDOVER",)
+    RETURN_NAMES = ("handover",)
+    FUNCTION = "stub"
+    CATEGORY = "H3 Continuous"
+    DESCRIPTION = ("Neutral 'no handover' value. Lets lazy-gated state-machine flows "
+                   "satisfy handover inputs on branches whose real handover producer "
+                   "(analyze -> decode -> sampler) must not execute.")
+
+    def stub(self):
+        return ({"available": False},)
+
+
 class H3ContinuousStart:
     @classmethod
     def INPUT_TYPES(cls):
@@ -2232,7 +2250,11 @@ class H3ContinuousStitchSavedChainV11:
                     "tooltip": "H.264 quality. Lower = larger/higher quality. 18 is a high-quality default."}),
                 "max_safe_tail_bridge_frames": ("INT", {"default": 2, "min": 0, "max": 4, "step": 1,
                     "tooltip": "Recommended: 2. Keeps only detector-approved rendered frames lost to phase alignment, then skips the same number of early video frames in the next clip."}),
-            }
+            },
+            "hidden": {
+                "prompt": "PROMPT",
+                "extra_pnginfo": "EXTRA_PNGINFO",
+            },
         }
 
     RETURN_TYPES = ("STRING", "STRING")
@@ -2246,7 +2268,7 @@ class H3ContinuousStitchSavedChainV11:
                first_clip=1, last_clip=0, filename_prefix="video/Herrgotts_H3_Infinite_Stitched",
                video_crossfade_frames=4, audio_crossfade_ms=15.0, luminance_match=False,
                luminance_fade_frames=16, max_luminance_correction_percent=10.0, crf=18,
-               max_safe_tail_bridge_frames=2):
+               max_safe_tail_bridge_frames=2, prompt=None, extra_pnginfo=None):
         # PyAV is part of current ComfyUI's video/audio stack. Import lazily so
         # installing the pack does not add import-time dependencies or side effects.
         try:
@@ -2263,7 +2285,21 @@ class H3ContinuousStitchSavedChainV11:
         if last < first:
             raise ValueError(f"last_clip {last} must be >= first_clip {first}")
 
-        paths = [_saved_chain_file(latent_prefix, i) for i in range(first, last + 1)]
+        # Graceful auto-mode skip: a single clip has nothing to join, and a
+        # partially-written chain (e.g. mid-queue in a state-machine flow) is
+        # not an error worth aborting the whole prompt over.
+        if last <= first:
+            info = (f"h3_continuous: stitch skipped — nothing to join yet "
+                    f"(first={first}, last={last}).")
+            _LOG.info("h3_continuous: %s", info)
+            return ("", info)
+
+        try:
+            paths = [_saved_chain_file(latent_prefix, i) for i in range(first, last + 1)]
+        except FileNotFoundError as e:
+            info = f"h3_continuous: stitch skipped — saved chain incomplete: {e}"
+            _LOG.info("h3_continuous: %s", info)
+            return ("", info)
         if len(paths) < 1:
             raise ValueError("no clips selected")
 
@@ -2374,6 +2410,21 @@ class H3ContinuousStitchSavedChainV11:
                     output.metadata["luminance_fade_frames"] = str(requested_luma_fade)
                     output.metadata["max_luminance_correction_percent"] = str(requested_luma_max_percent)
                     output.metadata["max_safe_tail_bridge_frames"] = str(requested_bridge_max)
+                    # Workflow provenance: embed the API-format prompt and the
+                    # frontend workflow graph as container metadata so rendered
+                    # MP4s remain reproducible. Defensive: never fail a render
+                    # over metadata.
+                    try:
+                        if prompt is not None:
+                            output.metadata["prompt"] = json.dumps(prompt)
+                    except Exception as e:
+                        _LOG.warning("h3_continuous: could not embed prompt metadata: %s", e)
+                    try:
+                        workflow = (extra_pnginfo or {}).get("workflow")
+                        if workflow is not None:
+                            output.metadata["workflow"] = json.dumps(workflow)
+                    except Exception as e:
+                        _LOG.warning("h3_continuous: could not embed workflow metadata: %s", e)
                     vstream = output.add_stream("h264", rate=Fraction(int(FPS), 1))
                     vstream.codec_context.max_b_frames = 0
                     vstream.codec_context.time_base = Fraction(1, int(FPS))
@@ -2643,7 +2694,11 @@ class H3ContinuousStitchSavedChainV14(H3ContinuousStitchSavedChainV11):
             "tooltip": "Legacy saved-chain compatibility only. Keep 0 for v1.4; Native Masked AV intentionally uses the exact shared video handover boundary.",
             "advanced": True,
         })
-        return {"required": required}
+        return {"required": required,
+                "hidden": {
+                    "prompt": "PROMPT",
+                    "extra_pnginfo": "EXTRA_PNGINFO",
+                }}
 
     CATEGORY = "Herrgotts H3 Infinite Continuation Suite"
     DESCRIPTION = (
@@ -2659,6 +2714,7 @@ H3ContinuousLatentInfo.CATEGORY = "Herrgotts H3 Infinite Continuation Suite"
 
 NODE_CLASS_MAPPINGS = {
     # v1.4 native Masked AV nodes (current ComfyUI with PR #15375)
+    "H3ContinuousHandoverStub": H3ContinuousHandoverStub,
     "H3ContinuousStartV14": H3ContinuousStartV14,
     "H3ContinuousContinueV14": H3ContinuousContinueV14,
     "H3ContinuousAnalyzeHandoverV14": H3ContinuousAnalyzeHandoverV14,
