@@ -1,0 +1,513 @@
+{
+  "3": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Video VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Audio VAE"
+    }
+  },
+  "6": {
+    "inputs": {
+      "prompt_text": "subject_definitions:\n<Subject 1> is a 21-year-old caucasian girl. Their name is Daniela.\n<Picture 1> is the first frame of [Shot 1], showing <Subject 1> hunched over, talking to a little girl, <Subject 2>\n<Video 1> is <Subject 1>\n<Subject 2> is the little girl wrapped in a towel. Their name is Kelly.\n\nsummary:\n[keyframe completion + reference generation] <Subject 2> Kelly hands an ice cream to <Subject 1> Daniela, who takes it and enjoys it while the camera starts a slow truck in.\n\nretention_analysis:\n<Picture 1> ([Shot 1] first frame): fully_preserved - it is used as the opening frame of [Shot 1] exactly as given.\n<Subject 1>: fully_preserved - \n\ndetailed_description:\nThe target video is a live-action, candid video, made outdoors on a professional camera.\n[Shot 1] The camera starts on the same wide framing as <Picture 1>, holding static while a hunched over <Subject 1> takes an ice cream handed to her by <Subject 2>. She thanks the girl - (S1) says: <d>[English] Thank you!</d>, then stands up straight and starts eating the ice cream. As she starts eating, the camera begins a slow, steady truck in toward her, and the truck in is still in motion when the shot ends.\n[Shot 2] No cut: the very same shot continues, and the camera keeps trucking in until it stops on a close up of <Subject 1> Daniela enjoying the ice cream.\n\noverall_soundscape:\nOutdoor ambience fitting the scene.\n\nnon_diegetic_music:\nN/A",
+      "builder_state": "{\"version\":1,\"mode\":\"REF\",\"off\":{},\"duration\":5,\"p2Shot\":1,\"lastShot\":1,\"imd\":\"\",\"soundscape\":\"\",\"music\":\"N/A\",\"ref\":{\"subjectDefs\":[{\"text\":\"<Subject 1> is a 21-year-old caucasian girl.\",\"name\":\"Daniela\",\"role\":null},{\"text\":\"<Picture 1> is the first frame of [Shot 1], showing <Subject 1> hunched over, talking to a little girl, <Subject 2>\",\"role\":null},{\"text\":\"<Video 1> is <Subject 1>\",\"role\":null},{\"text\":\"<Subject 2> is the little girl wrapped in a towel.\",\"role\":null,\"name\":\"Kelly\"}],\"summaryTypes\":[\"reference generation\",\"keyframe completion\"],\"summaryText\":\"!Kelly hands an ice cream to !Daniela, who takes it and enjoys it.\",\"retention\":[{\"label\":\"<Picture 1>\",\"context\":\"[Shot 1] first frame\",\"marker\":\"fully_preserved\",\"note\":\"it is used as the opening frame of [Shot 1] exactly as given.\"},{\"label\":\"<Subject 1>\",\"context\":\"\",\"marker\":\"fully_preserved\",\"note\":\"\"}],\"styleLine\":\"The target video is a live-action, candid video, made outdoors on a professional camera.\",\"detail\":\"[Shot 1] The camera holds a static shot, showing a hunched over <Subject 1> taking an ice cream handed to her by <Subject 2>. She thanks the girl - (S1) says: <d>[English] Thank you!</d>, then stands up straight with the ice cream in hand, moving it closer to her mouth. \\n[Shot 2] At 00:05.000, the shot cuts to a medium-close up, as !Daniela is enjoying the ice cream. The camera arcs around the subject with small amplitude at slow speed.\",\"soundscape\":\"Outdoor ambience fitting the scene.\",\"music\":\"N/A\"}}",
+      "Edit prompt\u2026": null,
+      "+ Media loader": null,
+      "+ RefMods": "",
+      "references": [
+        "7",
+        0
+      ],
+      "mods": [
+        "9",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3PromptBuilder",
+    "_meta": {
+      "title": "Fantastic H3 Prompt Builder"
+    }
+  },
+  "7": {
+    "inputs": {
+      "media_state": "[{\"kind\":\"picture\",\"file\":\"minimax_h3/064.png [input]\",\"name\":\"064.png\",\"duration\":null,\"width\":992,\"height\":992,\"has_audio\":false,\"audio_mode\":\"off\",\"uid\":\"mmut105oq0\"}]",
+      "Open loader\u2026": null,
+      "+ Native-output splitter": null
+    },
+    "class_type": "MiniMaxH3MediaLoader",
+    "_meta": {
+      "title": "Fantastic H3 Media Loader"
+    }
+  },
+  "9": {
+    "inputs": {
+      "stack_state": "{\"picks\":[{\"uid\":3,\"name\":\"FaceCrop_057_29557\",\"label\":\"FaceCrop_057_29557\",\"on\":true,\"preview\":\"FaceCrop_057_29557\",\"visual\":{\"file\":\"FaceCrop_057_29557\",\"kind\":\"video\",\"tokens\":2790,\"mode\":\"weight\",\"w\":1,\"s\":1,\"c\":1,\"embedded_audio_ignored\":false}}],\"budget\":0}"
+    },
+    "class_type": "MiniMaxH3RefModStack",
+    "_meta": {
+      "title": "Fantastic H3 RefMod Stack"
+    }
+  },
+  "12": {
+    "inputs": {
+      "clip_name": "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+      "type": "minimax",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "13": {
+    "inputs": {
+      "unet_name": "minimax_h3_hybrid_fl2va_ref2va_b20-49-int8.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Reference Model"
+    }
+  },
+  "15": {
+    "inputs": {
+      "sage_attention": "disabled",
+      "allow_compile": false,
+      "model": [
+        "28",
+        0
+      ]
+    },
+    "class_type": "PathchSageAttentionKJ",
+    "_meta": {
+      "title": "Patch Sage Attention KJ"
+    }
+  },
+  "16": {
+    "inputs": {
+      "tau": 1.3,
+      "start_percent": 0.2,
+      "end_percent": 0.9,
+      "min_tokens": 4096,
+      "int8_qk": true,
+      "sink_conditioning": "exact_kv_and_rows",
+      "morton": false,
+      "morton_curve": "2d_frame",
+      "int8_pv": true,
+      "verbose": false,
+      "use_tma": false,
+      "dense_blocks": "",
+      "model": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "SolAttnPatch",
+    "_meta": {
+      "title": "Patch Sol-Attn"
+    }
+  },
+  "17": {
+    "inputs": {
+      "shift_video": 12,
+      "shift_audio": 3,
+      "model": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3SigmaShift",
+    "_meta": {
+      "title": "ModelSamplingMiniMaxH3"
+    }
+  },
+  "18": {
+    "inputs": {
+      "sampler_name": "sa_solver"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "19": {
+    "inputs": {
+      "scheduler": "beta",
+      "steps": 8,
+      "denoise": 1,
+      "model": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "20": {
+    "inputs": {
+      "model": [
+        "21",
+        0
+      ],
+      "conditioning": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "Basic Guider"
+    }
+  },
+  "21": {
+    "inputs": {
+      "max_resolution": 856,
+      "jpeg_quality": 80,
+      "suppress_default_preview": true,
+      "preview_frames": 21,
+      "preview_fps": 7,
+      "tiny_vae": "taeh3.safetensors",
+      "model": [
+        "17",
+        0
+      ]
+    },
+    "class_type": "ModelPreviewOverrideKJ",
+    "_meta": {
+      "title": "Model Preview Override"
+    }
+  },
+  "22": {
+    "inputs": {
+      "noise": [
+        "27",
+        0
+      ],
+      "guider": [
+        "20",
+        0
+      ],
+      "sampler": [
+        "18",
+        0
+      ],
+      "sigmas": [
+        "19",
+        0
+      ],
+      "latent_image": [
+        "11",
+        1
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "23": {
+    "inputs": {
+      "samples": [
+        "22",
+        0
+      ],
+      "vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE Decode Audio"
+    }
+  },
+  "24": {
+    "inputs": {
+      "samples": [
+        "22",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "27": {
+    "inputs": {
+      "noise_seed": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "28": {
+    "inputs": {
+      "lora_name": "MMH3/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+      "strength_model": 1,
+      "model": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "43": {
+    "inputs": {
+      "seed": 552877407511854,
+      "mode": "fixed",
+      "history": "[552877407511854]"
+    },
+    "class_type": "FantasticSeeds",
+    "_meta": {
+      "title": "Fantastic Seeds \ud83c\udf31"
+    }
+  },
+  "34": {
+    "inputs": {
+      "megapixels": 0.5,
+      "multiple_of": 32,
+      "image": [
+        "6",
+        1
+      ]
+    },
+    "class_type": "ImageDimensionsFromMegaPixels",
+    "_meta": {
+      "title": "Dimensions From MP"
+    }
+  },
+  "29": {
+    "inputs": {
+      "value": 124
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Segment Frames (124 = 5 s)"
+    }
+  },
+  "11": {
+    "inputs": {
+      "conditioning": [
+        "11e",
+        0
+      ],
+      "width": [
+        "34",
+        0
+      ],
+      "height": [
+        "34",
+        1
+      ],
+      "duration": 5.0,
+      "reference_map": [
+        "11e",
+        1
+      ]
+    },
+    "class_type": "H3ContinuousStartExternalConditioning",
+    "_meta": {
+      "title": "H3 Start \u2014 External Conditioning"
+    }
+  },
+  "11e": {
+    "inputs": {
+      "prompt": [
+        "6",
+        0
+      ],
+      "width": [
+        "34",
+        0
+      ],
+      "height": [
+        "34",
+        1
+      ],
+      "length": [
+        "29",
+        0
+      ],
+      "ref_image_size": "match",
+      "reference_fps": 24,
+      "max_total_tokens": 0,
+      "voice_description_at_label": false,
+      "stack_pictures": "every 4th",
+      "clip": [
+        "12",
+        0
+      ],
+      "mods": [
+        "6",
+        20
+      ],
+      "references": [
+        "6",
+        19
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ]
+    },
+    "class_type": "MiniMaxH3FantasticRefModTextEncode",
+    "_meta": {
+      "title": "Fantastic H3 RefMod Text Encode"
+    }
+  },
+  "65": {
+    "inputs": {
+      "images": [
+        "24",
+        0
+      ],
+      "output_mode": "Stitch Ready",
+      "handover": [
+        "67",
+        0
+      ],
+      "audio": [
+        "23",
+        0
+      ],
+      "head_context_frames": 0
+    },
+    "class_type": "H3ContinuousStitchOutputV14",
+    "_meta": {
+      "title": "Output / Stitch \u2014 Masked AV v1.4"
+    }
+  },
+  "67": {
+    "inputs": {
+      "images": [
+        "24",
+        0
+      ],
+      "preset": "Balanced",
+      "analysis_window": 72,
+      "freeze_hold": 8,
+      "safety_margin": 3,
+      "context_frames": "39",
+      "analysis_size": 192,
+      "final_mean_diff_threshold": 0.012,
+      "final_active_pixel_threshold": 0.025,
+      "max_final_active_area_percent": 3.0,
+      "transition_mean_diff_threshold": 0.002,
+      "transition_active_pixel_threshold": 0.01,
+      "max_transition_active_area_percent": 1.0,
+      "min_static_transition_percent": 70.0,
+      "max_consecutive_motion_outliers": 2,
+      "final_reference_frames": 15,
+      "min_final_match_percent": 75.0,
+      "max_consecutive_final_outliers": 3,
+      "safety_mode": "fixed"
+    },
+    "class_type": "H3ContinuousAnalyzeHandoverV14",
+    "_meta": {
+      "title": "Auto Handover \u2014 Masked AV v1.4"
+    }
+  },
+  "66": {
+    "inputs": {
+      "latent": [
+        "22",
+        0
+      ],
+      "filename_prefix": "h3_external_conditioning/shot",
+      "clip_index": 1,
+      "handover": [
+        "67",
+        0
+      ]
+    },
+    "class_type": "H3ContinuousSaveLatent",
+    "_meta": {
+      "title": "Save AV Latent"
+    }
+  },
+  "70": {
+    "inputs": {
+      "source": [
+        "11",
+        2
+      ]
+    },
+    "class_type": "PreviewAny",
+    "_meta": {
+      "title": "Start Info"
+    }
+  },
+  "31": {
+    "inputs": {
+      "fps": 24,
+      "images": [
+        "65",
+        0
+      ],
+      "audio": [
+        "65",
+        1
+      ]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "Create Video"
+    }
+  },
+  "44": {
+    "inputs": {
+      "filename_prefix": "video/H3_External_Conditioning_01",
+      "format": "auto",
+      "codec": "auto",
+      "video": [
+        "31",
+        0
+      ]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "Save Video"
+    }
+  },
+  "74": {
+    "inputs": {
+      "images": [
+        "65",
+        5
+      ],
+      "filename_prefix": "h3_external_conditioning/handover_last_frame"
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Handover Last Frame"
+    }
+  }
+}

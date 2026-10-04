@@ -1,0 +1,2204 @@
+{
+  "id": null,
+  "revision": 1,
+  "last_node_id": 1015,
+  "last_link_id": 45,
+  "nodes": [
+    {
+      "id": 3,
+      "_api_id": "3",
+      "type": "VAELoader",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            15,
+            31
+          ]
+        }
+      ],
+      "title": "Load Video VAE",
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "minimax_h3_video_vae_fp16.safetensors"
+      ]
+    },
+    {
+      "id": 4,
+      "_api_id": "4",
+      "type": "VAELoader",
+      "pos": [
+        0,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "VAE",
+          "type": "VAE",
+          "links": [
+            16,
+            33
+          ]
+        }
+      ],
+      "title": "Load Audio VAE",
+      "properties": {
+        "Node name for S&R": "VAELoader",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "minimax_h3_audio_vae_fp32.safetensors"
+      ]
+    },
+    {
+      "id": 12,
+      "_api_id": "12",
+      "type": "CLIPLoader",
+      "pos": [
+        0,
+        210
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "CLIP",
+          "type": "CLIP",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "title": "Load CLIP",
+      "properties": {
+        "Node name for S&R": "CLIPLoader",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+        "minimax",
+        "default"
+      ]
+    },
+    {
+      "id": 13,
+      "_api_id": "13",
+      "type": "UNETLoader",
+      "pos": [
+        0,
+        420
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            1
+          ]
+        }
+      ],
+      "title": "Load Reference Model",
+      "properties": {
+        "Node name for S&R": "UNETLoader",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "minimax_h3_hybrid_fl2va_ref2va_b20-49-int8.safetensors",
+        "default"
+      ]
+    },
+    {
+      "id": 28,
+      "_api_id": "28",
+      "type": "LoraLoaderModelOnly",
+      "pos": [
+        0,
+        630
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 1,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            45
+          ]
+        }
+      ],
+      "title": "Load LoRA",
+      "properties": {
+        "Node name for S&R": "LoraLoaderModelOnly",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "MMH3/minimax_h3_fl2v_turbo_8step_v1.0_comfyui_bf16.safetensors",
+        1
+      ]
+    },
+    {
+      "id": 34,
+      "_api_id": "34",
+      "type": "ImageDimensionsFromMegaPixels",
+      "pos": [
+        0,
+        840
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 2,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "width",
+          "type": "INT",
+          "links": [
+            9,
+            18
+          ]
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "links": [
+            10,
+            19
+          ]
+        }
+      ],
+      "title": "Dimensions From MP",
+      "properties": {
+        "Node name for S&R": "ImageDimensionsFromMegaPixels",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        0.5,
+        32
+      ]
+    },
+    {
+      "id": 29,
+      "_api_id": "29",
+      "type": "PrimitiveInt",
+      "pos": [
+        0,
+        1050
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "INT",
+          "type": "INT",
+          "links": [
+            11
+          ]
+        }
+      ],
+      "title": "Segment Frames (124 = 5 s)",
+      "properties": {
+        "Node name for S&R": "PrimitiveInt",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        124
+      ]
+    },
+    {
+      "id": 16,
+      "_api_id": "16",
+      "type": "SolAttnPatch",
+      "pos": [
+        520,
+        210
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 3,
+          "shape": 7
+        },
+        {
+          "name": "tau_profile",
+          "type": "STRING",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            4
+          ]
+        }
+      ],
+      "title": "Patch Sol-Attn",
+      "properties": {
+        "Node name for S&R": "SolAttnPatch",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        1.3,
+        0.2,
+        0.9,
+        4096,
+        true,
+        "exact_kv_and_rows",
+        false,
+        "2d_frame",
+        true,
+        false,
+        false,
+        ""
+      ]
+    },
+    {
+      "id": 17,
+      "_api_id": "17",
+      "type": "MiniMaxH3SigmaShift",
+      "pos": [
+        520,
+        420
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 4,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            5,
+            21
+          ]
+        }
+      ],
+      "title": "ModelSamplingMiniMaxH3",
+      "properties": {
+        "Node name for S&R": "MiniMaxH3SigmaShift",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        12,
+        3
+      ]
+    },
+    {
+      "id": 21,
+      "_api_id": "21",
+      "type": "ModelPreviewOverrideKJ",
+      "pos": [
+        520,
+        630
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 5,
+          "shape": 7
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "audio_vae",
+          "type": "VAE",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            22
+          ]
+        }
+      ],
+      "title": "Model Preview Override",
+      "properties": {
+        "Node name for S&R": "ModelPreviewOverrideKJ",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        856,
+        80,
+        true,
+        21,
+        7,
+        "taeh3.safetensors"
+      ]
+    },
+    {
+      "id": 43,
+      "_api_id": "43",
+      "type": "FantasticSeeds",
+      "pos": [
+        520,
+        840
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "seed",
+          "type": "INT",
+          "links": [
+            24
+          ]
+        }
+      ],
+      "title": "Fantastic Seeds \ud83c\udf31",
+      "properties": {
+        "Node name for S&R": "FantasticSeeds",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        552877407511854,
+        "fixed",
+        "[552877407511854]"
+      ]
+    },
+    {
+      "id": 7,
+      "_api_id": "7",
+      "type": "MiniMaxH3MediaLoader",
+      "pos": [
+        1040,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "references",
+          "type": "H3_REFS",
+          "links": [
+            6
+          ]
+        }
+      ],
+      "title": "Fantastic H3 Media Loader",
+      "properties": {
+        "Node name for S&R": "MiniMaxH3MediaLoader",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "[{\"kind\":\"picture\",\"file\":\"minimax_h3/064.png [input]\",\"name\":\"064.png\",\"duration\":null,\"width\":992,\"height\":992,\"has_audio\":false,\"audio_mode\":\"off\",\"uid\":\"mmut105oq0\"}]"
+      ]
+    },
+    {
+      "id": 9,
+      "_api_id": "9",
+      "type": "MiniMaxH3RefModStack",
+      "pos": [
+        1040,
+        210
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mods",
+          "type": "H3_REF_MODS",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "mods",
+          "type": "H3_REF_MODS",
+          "links": [
+            7
+          ]
+        },
+        {
+          "name": "labels",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "Fantastic H3 RefMod Stack",
+      "properties": {
+        "Node name for S&R": "MiniMaxH3RefModStack",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "{\"picks\":[{\"uid\":3,\"name\":\"FaceCrop_057_29557\",\"label\":\"FaceCrop_057_29557\",\"on\":true,\"preview\":\"FaceCrop_057_29557\",\"visual\":{\"file\":\"FaceCrop_057_29557\",\"kind\":\"video\",\"tokens\":2790,\"mode\":\"weight\",\"w\":1,\"s\":1,\"c\":1,\"embedded_audio_ignored\":false}}],\"budget\":0}"
+      ]
+    },
+    {
+      "id": 6,
+      "_api_id": "6",
+      "type": "MiniMaxH3PromptBuilder",
+      "pos": [
+        1040,
+        420
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "references",
+          "type": "H3_REFS",
+          "link": 6,
+          "shape": 7
+        },
+        {
+          "name": "mods",
+          "type": "H3_REF_MODS",
+          "link": 7,
+          "shape": 7
+        },
+        {
+          "name": "picture_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_4",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_5",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_6",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_7",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_8",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "picture_9",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "video_1",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "video_2",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "video_3",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "video_audio_1",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "video_audio_2",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "video_audio_3",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "audio_1",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "audio_2",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "audio_3",
+          "type": "AUDIO",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "picture_1",
+          "type": "IMAGE",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "picture_2",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_3",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_4",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_5",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_6",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_7",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_8",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "picture_9",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "video_1",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "video_2",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "video_3",
+          "type": "IMAGE",
+          "links": null
+        },
+        {
+          "name": "video_audio_1",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "video_audio_2",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "video_audio_3",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "audio_1",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "audio_2",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "audio_3",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "references",
+          "type": "H3_REFS",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "mods",
+          "type": "H3_REF_MODS",
+          "links": [
+            13
+          ]
+        }
+      ],
+      "title": "Fantastic H3 Prompt Builder",
+      "properties": {
+        "Node name for S&R": "MiniMaxH3PromptBuilder",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "subject_definitions:\n<Subject 1> is a 21-year-old caucasian girl. Their name is Daniela.\n<Picture 1> is the first frame of [Shot 1], showing <Subject 1> hunched over, talking to a little girl, <Subject 2>\n<Video 1> is <Subject 1>\n<Subject 2> is the little girl wrapped in a towel. Their name is Kelly.\n\nsummary:\n[keyframe completion + reference generation] <Subject 2> Kelly hands an ice cream to <Subject 1> Daniela, who takes it and enjoys it while the camera starts a slow truck in.\n\nretention_analysis:\n<Picture 1> ([Shot 1] first frame): fully_preserved - it is used as the opening frame of [Shot 1] exactly as given.\n<Subject 1>: fully_preserved - \n\ndetailed_description:\nThe target video is a live-action, candid video, made outdoors on a professional camera.\n[Shot 1] The camera starts on the same wide framing as <Picture 1>, holding static while a hunched over <Subject 1> takes an ice cream handed to her by <Subject 2>. She thanks the girl - (S1) says: <d>[English] Thank you!</d>, then stands up straight and starts eating the ice cream. As she starts eating, the camera begins a slow, steady truck in toward her, and the truck in is still in motion when the shot ends.\n[Shot 2] No cut: the very same shot continues, and the camera keeps trucking in until it stops on a close up of <Subject 1> Daniela enjoying the ice cream.\n\noverall_soundscape:\nOutdoor ambience fitting the scene.\n\nnon_diegetic_music:\nN/A",
+        "{\"version\":1,\"mode\":\"REF\",\"off\":{},\"duration\":5,\"p2Shot\":1,\"lastShot\":1,\"imd\":\"\",\"soundscape\":\"\",\"music\":\"N/A\",\"ref\":{\"subjectDefs\":[{\"text\":\"<Subject 1> is a 21-year-old caucasian girl.\",\"name\":\"Daniela\",\"role\":null},{\"text\":\"<Picture 1> is the first frame of [Shot 1], showing <Subject 1> hunched over, talking to a little girl, <Subject 2>\",\"role\":null},{\"text\":\"<Video 1> is <Subject 1>\",\"role\":null},{\"text\":\"<Subject 2> is the little girl wrapped in a towel.\",\"role\":null,\"name\":\"Kelly\"}],\"summaryTypes\":[\"reference generation\",\"keyframe completion\"],\"summaryText\":\"!Kelly hands an ice cream to !Daniela, who takes it and enjoys it.\",\"retention\":[{\"label\":\"<Picture 1>\",\"context\":\"[Shot 1] first frame\",\"marker\":\"fully_preserved\",\"note\":\"it is used as the opening frame of [Shot 1] exactly as given.\"},{\"label\":\"<Subject 1>\",\"context\":\"\",\"marker\":\"fully_preserved\",\"note\":\"\"}],\"styleLine\":\"The target video is a live-action, candid video, made outdoors on a professional camera.\",\"detail\":\"[Shot 1] The camera holds a static shot, showing a hunched over <Subject 1> taking an ice cream handed to her by <Subject 2>. She thanks the girl - (S1) says: <d>[English] Thank you!</d>, then stands up straight with the ice cream in hand, moving it closer to her mouth. \\n[Shot 2] At 00:05.000, the shot cuts to a medium-close up, as !Daniela is enjoying the ice cream. The camera arcs around the subject with small amplitude at slow speed.\",\"soundscape\":\"Outdoor ambience fitting the scene.\",\"music\":\"N/A\"}}"
+      ]
+    },
+    {
+      "id": 1015,
+      "_api_id": "11e",
+      "type": "MiniMaxH3FantasticRefModTextEncode",
+      "pos": [
+        1560,
+        0
+      ],
+      "size": [
+        1280,
+        430
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "clip",
+          "type": "CLIP",
+          "link": 12,
+          "shape": 7
+        },
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "link": 8,
+          "shape": 7
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "link": 9,
+          "shape": 7
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "link": 10,
+          "shape": 7
+        },
+        {
+          "name": "length",
+          "type": "INT",
+          "link": 11,
+          "shape": 7
+        },
+        {
+          "name": "mods",
+          "type": "H3_REF_MODS",
+          "link": 13,
+          "shape": 7
+        },
+        {
+          "name": "references",
+          "type": "H3_REFS",
+          "link": 14,
+          "shape": 7
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 15,
+          "shape": 7
+        },
+        {
+          "name": "audio_vae",
+          "type": "VAE",
+          "link": 16,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "links": [
+            17
+          ]
+        },
+        {
+          "name": "reference_map",
+          "type": "STRING",
+          "links": [
+            20
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "title": "Fantastic H3 RefMod Text Encode",
+      "properties": {
+        "Node name for S&R": "MiniMaxH3FantasticRefModTextEncode",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        null,
+        1344,
+        768,
+        124,
+        "match",
+        24,
+        0,
+        false,
+        "every 4th"
+      ]
+    },
+    {
+      "id": 11,
+      "_api_id": "11",
+      "type": "H3ContinuousStartExternalConditioning",
+      "pos": [
+        1560,
+        210
+      ],
+      "size": [
+        1280,
+        430
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 17,
+          "shape": 7
+        },
+        {
+          "name": "width",
+          "type": "INT",
+          "link": 18,
+          "shape": 7
+        },
+        {
+          "name": "height",
+          "type": "INT",
+          "link": 19,
+          "shape": 7
+        },
+        {
+          "name": "first_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "last_frame",
+          "type": "IMAGE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "reference_map",
+          "type": "STRING",
+          "link": 20,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "positive",
+          "type": "CONDITIONING",
+          "links": [
+            23
+          ]
+        },
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "links": [
+            29
+          ]
+        },
+        {
+          "name": "info",
+          "type": "STRING",
+          "links": [
+            40
+          ]
+        }
+      ],
+      "title": "H3 Start \u2014 External Conditioning",
+      "properties": {
+        "Node name for S&R": "H3ContinuousStartExternalConditioning",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        1344,
+        768,
+        5.0
+      ]
+    },
+    {
+      "id": 18,
+      "_api_id": "18",
+      "type": "KSamplerSelect",
+      "pos": [
+        2080,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SAMPLER",
+          "type": "SAMPLER",
+          "links": [
+            27
+          ]
+        }
+      ],
+      "title": "KSamplerSelect",
+      "properties": {
+        "Node name for S&R": "KSamplerSelect",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "sa_solver"
+      ]
+    },
+    {
+      "id": 19,
+      "_api_id": "19",
+      "type": "BasicScheduler",
+      "pos": [
+        2080,
+        210
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 21,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SIGMAS",
+          "type": "SIGMAS",
+          "links": [
+            28
+          ]
+        }
+      ],
+      "title": "BasicScheduler",
+      "properties": {
+        "Node name for S&R": "BasicScheduler",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "beta",
+        8,
+        1
+      ]
+    },
+    {
+      "id": 20,
+      "_api_id": "20",
+      "type": "BasicGuider",
+      "pos": [
+        2080,
+        420
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 22,
+          "shape": 7
+        },
+        {
+          "name": "conditioning",
+          "type": "CONDITIONING",
+          "link": 23,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "GUIDER",
+          "type": "GUIDER",
+          "links": [
+            26
+          ]
+        }
+      ],
+      "title": "Basic Guider",
+      "properties": {
+        "Node name for S&R": "BasicGuider",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 27,
+      "_api_id": "27",
+      "type": "RandomNoise",
+      "pos": [
+        2080,
+        630
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise_seed",
+          "type": "INT",
+          "link": 24,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "NOISE",
+          "type": "NOISE",
+          "links": [
+            25
+          ]
+        }
+      ],
+      "title": "RandomNoise",
+      "properties": {
+        "Node name for S&R": "RandomNoise",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        0
+      ]
+    },
+    {
+      "id": 22,
+      "_api_id": "22",
+      "type": "SamplerCustomAdvanced",
+      "pos": [
+        2600,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "noise",
+          "type": "NOISE",
+          "link": 25,
+          "shape": 7
+        },
+        {
+          "name": "guider",
+          "type": "GUIDER",
+          "link": 26,
+          "shape": 7
+        },
+        {
+          "name": "sampler",
+          "type": "SAMPLER",
+          "link": 27,
+          "shape": 7
+        },
+        {
+          "name": "sigmas",
+          "type": "SIGMAS",
+          "link": 28,
+          "shape": 7
+        },
+        {
+          "name": "latent_image",
+          "type": "LATENT",
+          "link": 29,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "type": "LATENT",
+          "links": [
+            30,
+            32,
+            38
+          ]
+        },
+        {
+          "name": "denoised_output",
+          "type": "LATENT",
+          "links": null
+        }
+      ],
+      "title": "SamplerCustomAdvanced",
+      "properties": {
+        "Node name for S&R": "SamplerCustomAdvanced",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 24,
+      "_api_id": "24",
+      "type": "VAEDecode",
+      "pos": [
+        3120,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 30,
+          "shape": 7
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 31,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            34,
+            35
+          ]
+        }
+      ],
+      "title": "VAE Decode",
+      "properties": {
+        "Node name for S&R": "VAEDecode",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 23,
+      "_api_id": "23",
+      "type": "VAEDecodeAudio",
+      "pos": [
+        3120,
+        210
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "samples",
+          "type": "LATENT",
+          "link": 32,
+          "shape": 7
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 33,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "AUDIO",
+          "type": "AUDIO",
+          "links": [
+            37
+          ]
+        }
+      ],
+      "title": "VAE Decode Audio",
+      "properties": {
+        "Node name for S&R": "VAEDecodeAudio",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 67,
+      "_api_id": "67",
+      "type": "H3ContinuousAnalyzeHandoverV14",
+      "pos": [
+        3120,
+        420
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 34,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "handover",
+          "type": "H3_CONTINUOUS_HANDOVER",
+          "links": [
+            36,
+            39
+          ]
+        },
+        {
+          "name": "analysis_info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "freeze_detected",
+          "type": "BOOLEAN",
+          "links": null
+        },
+        {
+          "name": "freeze_start_frame",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "ideal_handover_end_frame",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "phase_aligned_handover_end_frame",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "ignored_tail_frames",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "confidence",
+          "type": "FLOAT",
+          "links": null
+        }
+      ],
+      "title": "Auto Handover \u2014 Masked AV v1.4",
+      "properties": {
+        "Node name for S&R": "H3ContinuousAnalyzeHandoverV14",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "Balanced",
+        72,
+        8,
+        3,
+        "39",
+        192,
+        0.012,
+        0.025,
+        3.0,
+        0.002,
+        0.01,
+        1.0,
+        70.0,
+        2,
+        15,
+        75.0,
+        3,
+        "fixed"
+      ]
+    },
+    {
+      "id": 65,
+      "_api_id": "65",
+      "type": "H3ContinuousStitchOutputV14",
+      "pos": [
+        3640,
+        0
+      ],
+      "size": [
+        860,
+        430
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 35,
+          "shape": 7
+        },
+        {
+          "name": "handover",
+          "type": "H3_CONTINUOUS_HANDOVER",
+          "link": 36,
+          "shape": 7
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 37,
+          "shape": 7
+        },
+        {
+          "name": "head_context_frames",
+          "type": "INT",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            41
+          ]
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            42
+          ]
+        },
+        {
+          "name": "trim_info",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "head_trim_frames",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "tail_trim_frames",
+          "type": "INT",
+          "links": null
+        },
+        {
+          "name": "last_frame",
+          "type": "IMAGE",
+          "links": [
+            44
+          ]
+        }
+      ],
+      "title": "Output / Stitch \u2014 Masked AV v1.4",
+      "properties": {
+        "Node name for S&R": "H3ContinuousStitchOutputV14",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "Stitch Ready"
+      ]
+    },
+    {
+      "id": 66,
+      "_api_id": "66",
+      "type": "H3ContinuousSaveLatent",
+      "pos": [
+        3640,
+        210
+      ],
+      "size": [
+        860,
+        430
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "latent",
+          "type": "LATENT",
+          "link": 38,
+          "shape": 7
+        },
+        {
+          "name": "handover",
+          "type": "H3_CONTINUOUS_HANDOVER",
+          "link": 39,
+          "shape": 7
+        },
+        {
+          "name": "head_context_frames",
+          "type": "INT",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "latent_path",
+          "type": "STRING",
+          "links": null
+        },
+        {
+          "name": "latent_info",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "Save AV Latent",
+      "properties": {
+        "Node name for S&R": "H3ContinuousSaveLatent",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "h3_external_conditioning/shot",
+        1
+      ]
+    },
+    {
+      "id": 70,
+      "_api_id": "70",
+      "type": "PreviewAny",
+      "pos": [
+        3640,
+        630
+      ],
+      "size": [
+        860,
+        430
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "source",
+          "type": "*",
+          "link": 40,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "title": "Start Info",
+      "properties": {
+        "Node name for S&R": "PreviewAny",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 31,
+      "_api_id": "31",
+      "type": "CreateVideo",
+      "pos": [
+        4160,
+        0
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 27,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 41,
+          "shape": 7
+        },
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 42,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "VIDEO",
+          "type": "VIDEO",
+          "links": [
+            43
+          ]
+        }
+      ],
+      "title": "Create Video",
+      "properties": {
+        "Node name for S&R": "CreateVideo",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        24,
+        "auto",
+        "sRGB",
+        "none"
+      ]
+    },
+    {
+      "id": 44,
+      "_api_id": "44",
+      "type": "SaveVideo",
+      "pos": [
+        4160,
+        210
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 28,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "link": 43,
+          "shape": 7
+        },
+        {
+          "name": "format",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "shape": 7
+        },
+        {
+          "name": "codec",
+          "type": "COMFY_DYNAMICCOMBO_V3",
+          "link": null,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        }
+      ],
+      "title": "Save Video",
+      "properties": {
+        "Node name for S&R": "SaveVideo",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "video/H3_External_Conditioning_01"
+      ]
+    },
+    {
+      "id": 74,
+      "_api_id": "74",
+      "type": "SaveImage",
+      "pos": [
+        4160,
+        420
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 29,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 44,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "Save Handover Last Frame",
+      "properties": {
+        "Node name for S&R": "SaveImage",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "h3_external_conditioning/handover_last_frame"
+      ]
+    },
+    {
+      "id": 15,
+      "_api_id": "15",
+      "type": "PathchSageAttentionKJ",
+      "pos": [
+        0,
+        6300
+      ],
+      "size": [
+        620,
+        430
+      ],
+      "flags": {},
+      "order": 30,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "MODEL",
+          "link": 45,
+          "shape": 7
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MODEL",
+          "type": "MODEL",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "title": "Patch Sage Attention KJ",
+      "properties": {
+        "Node name for S&R": "PathchSageAttentionKJ",
+        "cnr_id": "herrgotts-h3-infinite-continuation-suite",
+        "ver": "1.4.0"
+      },
+      "widgets_values": [
+        "disabled",
+        false
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      13,
+      0,
+      28,
+      0,
+      "MODEL"
+    ],
+    [
+      2,
+      6,
+      1,
+      34,
+      0,
+      "IMAGE"
+    ],
+    [
+      3,
+      15,
+      0,
+      16,
+      0,
+      "MODEL"
+    ],
+    [
+      4,
+      16,
+      0,
+      17,
+      0,
+      "MODEL"
+    ],
+    [
+      5,
+      17,
+      0,
+      21,
+      0,
+      "MODEL"
+    ],
+    [
+      6,
+      7,
+      0,
+      6,
+      0,
+      "H3_REFS"
+    ],
+    [
+      7,
+      9,
+      0,
+      6,
+      1,
+      "H3_REF_MODS"
+    ],
+    [
+      8,
+      6,
+      0,
+      1015,
+      1,
+      "STRING"
+    ],
+    [
+      9,
+      34,
+      0,
+      1015,
+      2,
+      "INT"
+    ],
+    [
+      10,
+      34,
+      1,
+      1015,
+      3,
+      "INT"
+    ],
+    [
+      11,
+      29,
+      0,
+      1015,
+      4,
+      "INT"
+    ],
+    [
+      12,
+      12,
+      0,
+      1015,
+      0,
+      "CLIP"
+    ],
+    [
+      13,
+      6,
+      20,
+      1015,
+      5,
+      "H3_REF_MODS"
+    ],
+    [
+      14,
+      6,
+      19,
+      1015,
+      6,
+      "H3_REFS"
+    ],
+    [
+      15,
+      3,
+      0,
+      1015,
+      7,
+      "VAE"
+    ],
+    [
+      16,
+      4,
+      0,
+      1015,
+      8,
+      "VAE"
+    ],
+    [
+      17,
+      1015,
+      0,
+      11,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      18,
+      34,
+      0,
+      11,
+      1,
+      "INT"
+    ],
+    [
+      19,
+      34,
+      1,
+      11,
+      2,
+      "INT"
+    ],
+    [
+      20,
+      1015,
+      1,
+      11,
+      6,
+      "STRING"
+    ],
+    [
+      21,
+      17,
+      0,
+      19,
+      0,
+      "MODEL"
+    ],
+    [
+      22,
+      21,
+      0,
+      20,
+      0,
+      "MODEL"
+    ],
+    [
+      23,
+      11,
+      0,
+      20,
+      1,
+      "CONDITIONING"
+    ],
+    [
+      24,
+      43,
+      0,
+      27,
+      0,
+      "INT"
+    ],
+    [
+      25,
+      27,
+      0,
+      22,
+      0,
+      "NOISE"
+    ],
+    [
+      26,
+      20,
+      0,
+      22,
+      1,
+      "GUIDER"
+    ],
+    [
+      27,
+      18,
+      0,
+      22,
+      2,
+      "SAMPLER"
+    ],
+    [
+      28,
+      19,
+      0,
+      22,
+      3,
+      "SIGMAS"
+    ],
+    [
+      29,
+      11,
+      1,
+      22,
+      4,
+      "LATENT"
+    ],
+    [
+      30,
+      22,
+      0,
+      24,
+      0,
+      "LATENT"
+    ],
+    [
+      31,
+      3,
+      0,
+      24,
+      1,
+      "VAE"
+    ],
+    [
+      32,
+      22,
+      0,
+      23,
+      0,
+      "LATENT"
+    ],
+    [
+      33,
+      4,
+      0,
+      23,
+      1,
+      "VAE"
+    ],
+    [
+      34,
+      24,
+      0,
+      67,
+      0,
+      "IMAGE"
+    ],
+    [
+      35,
+      24,
+      0,
+      65,
+      0,
+      "IMAGE"
+    ],
+    [
+      36,
+      67,
+      0,
+      65,
+      1,
+      "H3_CONTINUOUS_HANDOVER"
+    ],
+    [
+      37,
+      23,
+      0,
+      65,
+      2,
+      "AUDIO"
+    ],
+    [
+      38,
+      22,
+      0,
+      66,
+      0,
+      "LATENT"
+    ],
+    [
+      39,
+      67,
+      0,
+      66,
+      1,
+      "H3_CONTINUOUS_HANDOVER"
+    ],
+    [
+      40,
+      11,
+      2,
+      70,
+      0,
+      "*"
+    ],
+    [
+      41,
+      65,
+      0,
+      31,
+      0,
+      "IMAGE"
+    ],
+    [
+      42,
+      65,
+      1,
+      31,
+      1,
+      "AUDIO"
+    ],
+    [
+      43,
+      31,
+      0,
+      44,
+      0,
+      "VIDEO"
+    ],
+    [
+      44,
+      65,
+      5,
+      74,
+      0,
+      "IMAGE"
+    ],
+    [
+      45,
+      28,
+      0,
+      15,
+      0,
+      "MODEL"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.4,
+      "offset": [
+        200,
+        300
+      ]
+    },
+    "frontendVersion": "1.53.10",
+    "title": "H3 External Conditioning - Job 1: Start (segment 1)"
+  },
+  "version": 0.4
+}

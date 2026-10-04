@@ -53,6 +53,52 @@ def get_layout_patch_status():
     return status, None
 
 
+def _class_level_init(module):
+    """The constructor actually defined on the class, ignoring instance attributes."""
+    try:
+        return module.PackedLayout.__dict__.get("__init__")
+    except Exception:
+        return None
+
+
+def _probe_layout_capability(module, init, sig):
+    """Classify the live layout API by construction instead of by signature.
+
+    Another H3 node pack (for example SolAttn) can wrap ``PackedLayout.__init__``
+    in a generic ``*args/**kwargs`` shim, which hides the real parameters from
+    ``inspect.signature``. The capability question is still answerable: build a
+    real layout and see which constructor shape it accepts.
+    """
+    text_len, latent_t, lh, lw, audio_t = 7, 7, 22, 38, 16
+    interior = [{"resolved_frame_index": 5}]
+    refs = [{"kind": "audio", "ref_audio_t": 5}]
+
+    # Modern API: named keyframes/refs and no frame_count.
+    try:
+        layout = module.PackedLayout.__new__(module.PackedLayout)
+        init(layout, text_len, latent_t, lh, lw, audio_t, keyframes=interior, refs=refs)
+        if getattr(layout, "position_ids", None) is not None:
+            return NATIVE_LAYOUT_MODE, sig, None
+    except TypeError:
+        pass
+    except Exception:
+        pass
+
+    # Legacy API: positional frame_count, endpoint-only keyframes.
+    try:
+        layout = module.PackedLayout.__new__(module.PackedLayout)
+        init(layout, text_len, latent_t, lh, lw, audio_t, None, interior)
+        if getattr(layout, "position_ids", None) is not None:
+            return LEGACY_LAYOUT_MODE, sig, None
+    except Exception:
+        pass
+
+    return None, sig, (
+        "PackedLayout could be constructed with neither the native keyframes/refs "
+        "signature nor the legacy frame_count signature"
+    )
+
+
 def detect_layout_api():
     """Return ``(mode, signature, error)`` for the live ComfyUI H3 layout API.
 
@@ -60,6 +106,11 @@ def detect_layout_api():
     the interior-keyframe workaround. ``native`` means ``frame_count`` is gone
     while named keyframe/reference inputs remain, matching ComfyUI 0.33's public
     arbitrary-keyframe layout.
+
+    Detection must survive foreign wrappers around ``PackedLayout.__init__``
+    (another H3 pack may replace it with a generic ``*args/**kwargs`` shim), so
+    it falls back from our own markers to the class-level constructor and finally
+    to an actual capability probe.
     """
     try:
         mm = _import_mm()
@@ -81,16 +132,46 @@ def detect_layout_api():
     try:
         sig = inspect.signature(fn)
     except Exception as exc:
-        return None, None, f"cannot inspect PackedLayout.__init__: {exc}"
+        sig = None
+        sig_error = f"cannot inspect PackedLayout.__init__: {exc}"
+    else:
+        sig_error = None
 
-    names = set(sig.parameters)
+    names = set(sig.parameters) if sig is not None else set()
     common = {"text_len", "latent_t", "latent_h", "latent_w", "audio_t", "keyframes", "refs"}
-    missing = common - names
-    if missing:
-        return None, sig, f"PackedLayout.__init__ is missing expected parameters {sorted(missing)}"
-    if "frame_count" in names:
+    if not (common - names) and "frame_count" in names:
+        # Fully visible legacy constructor.
         return LEGACY_LAYOUT_MODE, sig, None
-    return NATIVE_LAYOUT_MODE, sig, None
+    if not (common - names):
+        # Fully visible native constructor.
+        return NATIVE_LAYOUT_MODE, sig, None
+
+    # Signature is hidden or generic. Prefer the class-level constructor, which a
+    # foreign instance-attribute wrapper cannot hide.
+    class_init = _class_level_init(mm)
+    if class_init is not None and class_init is not fn:
+        try:
+            class_sig = inspect.signature(class_init)
+        except Exception:
+            class_sig = None
+        class_names = set(class_sig.parameters) if class_sig is not None else set()
+        if not (common - class_names):
+            mode = LEGACY_LAYOUT_MODE if "frame_count" in class_names else NATIVE_LAYOUT_MODE
+            return mode, class_sig or sig, None
+
+    # Last resort: ask the live constructor directly.
+    probe_init = class_init if class_init is not None else fn
+    mode, probe_sig, probe_error = _probe_layout_capability(mm, probe_init, sig)
+    if mode is not None:
+        return mode, probe_sig, None
+
+    if sig_error:
+        return None, sig, sig_error
+    missing = sorted(common - names)
+    return None, sig, (
+        f"PackedLayout.__init__ is missing expected parameters {missing} "
+        f"({probe_error})"
+    )
 
 
 def _ref_cursor_advance(mm, refs):

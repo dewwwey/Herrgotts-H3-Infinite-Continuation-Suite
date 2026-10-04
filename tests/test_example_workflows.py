@@ -168,24 +168,45 @@ def test_node_list_covers_every_registered_node_mapping():
         if line.startswith('"') and '":' in line:
             registered.add(line.split('"', 2)[1])
     assert registered
+    # Sibling modules register their nodes through the same package mapping, so
+    # their IDs have to be documented too.
+    external_source = (ROOT / "external_conditioning.py").read_text(encoding="utf-8")
+    external_block = external_source.split("NODE_CLASS_MAPPINGS = {", 1)[1].split("}", 1)[0]
+    for line in external_block.splitlines():
+        line = line.strip()
+        if line.startswith('"') and '":' in line:
+            registered.add(line.split('"', 2)[1])
     assert set(node_list) == registered
 
 
 def test_v14_continue_static_contract_uses_native_masks_not_legacy_runtime_patch():
     source = (ROOT / "nodes.py").read_text(encoding="utf-8")
     block = source.split("class H3ContinuousContinueV14", 1)[1].split("# ---------------------------------------------------------------------------\n# v1.2 release-facing nodes", 1)[0]
+    # v1.4's Masked-AV planning is shared with the external-conditioning Continue
+    # node; the node itself still only orchestrates encoder presentation + planning.
     assert "_require_masked_av_support()" in block
-    assert "_masked_av_latent(" in block
+    assert "plan_masked_av_continuation(" in block
     assert "_require_patches(" not in block
     assert "handover_mode" not in block
-    assert "safe_end = int(handover.get(\"handover_end_frame\", -1))" in block
-    assert "ideal_last_frame=safe_end" in block
     assert "phase_aligned_extended" not in block
     assert "masked_av_duration_plan" in block
     assert 'duration_mode="Net New Content"' in block
     assert 'audio_tail_carryover="Full Previous Tail"' in block
-    assert "audio_tail_mode=audio_tail_carryover" in block
     assert "alignment_recovery" not in block.lower()
+
+    planner = source.split("def plan_masked_av_continuation", 1)[1].split(
+        "class H3ContinuousContinueV14", 1)[0]
+    assert "_require_masked_av_support" not in planner  # planning is encoder-free
+    assert "no clip, no prompt, no tokenization" in planner  # documented contract
+    signature = planner.split("):", 1)[0]
+    assert "clip" not in signature and "tokenize" not in signature
+    assert "_masked_av_latent(" in planner
+    assert "masked_av_duration_plan(" in planner
+    assert "masked_av_context_slice(" in planner
+    assert 'safe_end = int(handover.get("handover_end_frame", -1))' in planner
+    assert "ideal_last_frame=safe_end" in planner
+    assert "audio_tail_mode=audio_tail_carryover" in planner
+    assert "audio_feather_ticks=audio_feather_ticks" in planner
 
     latent_math_source = (ROOT / "latent_math.py").read_text(encoding="utf-8")
     assert "def masked_av_audio_context_plan" in latent_math_source
@@ -224,8 +245,9 @@ def test_readme_places_v14_update_information_after_installation_before_usage():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     install = text.index("## Installation")
     update = text.index("## v1.4 native Masked AV continuation")
+    external = text.index("## External Conditioning")
     usage = text.index("## Usage")
-    assert install < update < usage
+    assert install < update < external < usage
 
 
 def test_candidate_docs_and_examples_use_v14_names_without_stale_v13_workflow_names():

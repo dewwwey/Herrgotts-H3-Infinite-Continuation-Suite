@@ -1,0 +1,59 @@
+{
+  "3": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Video VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load Audio VAE"
+    }
+  },
+  "69": {
+    "inputs": {
+      "video_vae": [
+        "3",
+        0
+      ],
+      "audio_vae": [
+        "4",
+        0
+      ],
+      "latent_prefix": "h3_external_conditioning/shot",
+      "first_clip": 1,
+      "last_clip": 2,
+      "filename_prefix": "video/H3_External_Conditioning_final",
+      "video_crossfade_frames": 4,
+      "audio_crossfade_ms": 15.0,
+      "luminance_match": false,
+      "luminance_fade_frames": 16,
+      "max_luminance_correction_percent": 10.0,
+      "crf": 18,
+      "max_safe_tail_bridge_frames": 0
+    },
+    "class_type": "H3ContinuousStitchSavedChainV14",
+    "_meta": {
+      "title": "Stitch Saved Chain \u2014 Masked AV v1.4"
+    }
+  },
+  "80": {
+    "inputs": {
+      "source": [
+        "69",
+        1
+      ]
+    },
+    "class_type": "PreviewAny",
+    "_meta": {
+      "title": "Stitch Info"
+    }
+  }
+}

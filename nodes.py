@@ -813,30 +813,99 @@ class H3ContinuousSaveLatent:
         return (path, info)
 
 
+def _candidate_output_roots():
+    """Every root a saved AV latent may live under, most specific first.
+
+    ``folder_paths.get_output_directory()`` and ``get_save_image_path()`` can
+    resolve differently (for example when ComfyUI runs with ``--base-directory``
+    plus the output-directory override), so resolving a saved chain must not
+    assume they agree.
+    """
+    roots = []
+    for getter in ("get_output_directory", "get_temp_directory"):
+        try:
+            value = getattr(folder_paths, getter)()
+        except Exception:
+            continue
+        if value and value not in roots:
+            roots.append(value)
+    try:
+        value = os.path.dirname(folder_paths.get_save_image_path("probe", folder_paths.get_output_directory())[0])
+        if value and value not in roots:
+            roots.append(value)
+    except Exception:
+        pass
+    return roots
+
+
 def _resolve_latent_path(path, clip_index):
     p = (path or "").strip().strip('"').strip("'")
     if not p:
         p = "h3_continuous"
-    candidates = [p, os.path.join(folder_paths.get_output_directory(), p)]
+
+    roots = _candidate_output_roots()
+
+    def _pick_from_dir(directory, label):
+        """Pick the requested clip slot out of a concrete directory."""
+        if not os.path.isdir(directory):
+            return None
+        if not label:
+            files = [os.path.join(directory, f) for f in os.listdir(directory)
+                     if f.endswith(".safetensors")]
+            if not files:
+                raise FileNotFoundError(f"h3_continuous: no .safetensors files in {directory}")
+            return max(files, key=os.path.getmtime)
+        wanted = [os.path.join(directory, f) for f in os.listdir(directory)
+                  if f.endswith(".safetensors") and f.split(".")[0].startswith(label)]
+        if not wanted:
+            return None
+        idx = int(clip_index)
+        if idx > 0:
+            suffix = f"_{idx:05d}.safetensors"
+            fixed = [f for f in wanted if f.endswith(suffix)]
+            if not fixed:
+                raise FileNotFoundError(
+                    f"h3_continuous: no fixed slot {idx} in {directory} "
+                    f"(expected *{suffix} for prefix {label!r})"
+                )
+            return max(fixed, key=os.path.getmtime)
+        return max(wanted, key=os.path.getmtime)
+
+    candidates = [p]
+    candidates.extend(os.path.join(root, p) for root in roots)
+
+    seen = set()
+    checked = []
     for c in candidates:
+        if c in seen:
+            continue
+        seen.add(c)
+        checked.append(c)
         if os.path.isfile(c):
             return c
         if os.path.isdir(c):
-            files = [os.path.join(c, f) for f in os.listdir(c) if f.endswith(".safetensors")]
-            if not files:
+            # A directory given directly: list it.
+            picked = _pick_from_dir(c, "")
+            if picked is None:
                 raise FileNotFoundError(f"h3_continuous: no .safetensors files in {c}")
-            idx = int(clip_index)
-            if idx > 0:
-                suffix = f"_{idx:05d}.safetensors"
-                fixed = [f for f in files if f.endswith(suffix)]
-                if not fixed:
-                    raise FileNotFoundError(
-                        f"h3_continuous: no fixed slot {idx} in {c} (expected *{suffix})"
-                    )
-                return max(fixed, key=os.path.getmtime)
-            return max(files, key=os.path.getmtime)
+            return picked
+
+    # The documented input is a filename prefix (Save AV Latent's
+    # filename_prefix), not a literal path. A prefix has no exact file or
+    # directory of its own, so also look for <root>/<prefix>_<slot>.safetensors.
+    name = os.path.basename(p.rstrip("/\\"))
+    for root in roots:
+        directory = os.path.join(root, os.path.dirname(p))
+        checked.append(f"{directory} (prefix {name!r})")
+        picked = _pick_from_dir(directory, name)
+        if picked is not None:
+            return picked
+
     raise FileNotFoundError(
-        f"h3_continuous: {p!r} is neither a file nor a folder (also tried ComfyUI output directory)"
+        f"h3_continuous: {p!r} is neither a file, a folder, nor a saved prefix under "
+        + ", ".join(repr(r) for r in roots)
+        + " | checked: "
+        + ", ".join(c if os.sep in c else repr(c) for c in checked)
     )
 
 
@@ -1326,11 +1395,11 @@ class H3ContinuousStitchOutputV1:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "AUDIO", "STRING", "INT", "INT")
-    RETURN_NAMES = ("images", "audio", "trim_info", "head_trim_frames", "tail_trim_frames")
+    RETURN_TYPES = ("IMAGE", "AUDIO", "STRING", "INT", "INT", "IMAGE")
+    RETURN_NAMES = ("images", "audio", "trim_info", "head_trim_frames", "tail_trim_frames", "last_frame")
     FUNCTION = "prepare"
     CATEGORY = "H3 Continuous"
-    DESCRIPTION = "v1.0 rendered AV output helper. Full preserves the complete render; Stitch Ready removes dynamic continuation overlap and the exact phase-aligned freeze tail for direct concatenation."
+    DESCRIPTION = "v1.0 rendered AV output helper. Full preserves the complete render; Stitch Ready removes dynamic continuation overlap and the exact phase-aligned freeze tail for direct concatenation. last_frame is this clip's exact join frame after trimming - save it and hand it to the next segment's text encoder as the previous-scene picture so the continuation stays in the same scene."
 
     def prepare(self, images, output_mode="Full", head_context_frames=0, handover=None, audio=None):
         total = int(images.shape[0])
@@ -1343,6 +1412,7 @@ class H3ContinuousStitchOutputV1:
             out_images, out_audio = H3ContinuousTrim().trim(
                 images, head, tail, fps=FPS, audio=audio
             )
+        last_frame = out_images[-1:]
         info = (
             f"{plan['mode']} | source {total} frames | head trim {head} | tail trim {tail} | "
             f"kept {int(out_images.shape[0])} frames @ {FPS:g}fps"
@@ -1356,7 +1426,7 @@ class H3ContinuousStitchOutputV1:
                 f"effective tail {handover.get('landing_tail_frames')})"
             )
         _LOG.info("h3_continuous: output %s", info)
-        return (out_images, out_audio, info, head, tail)
+        return (out_images, out_audio, info, head, tail, last_frame)
 
 
 # ---------------------------------------------------------------------------
@@ -1499,6 +1569,104 @@ class H3ContinuousStartV14(H3ContinuousStartV13):
     )
 
 
+def plan_masked_av_continuation(previous_latent, handover, target_latent, width, height,
+                                duration, masked_context_frames="39",
+                                duration_mode="Net New Content",
+                                audio_tail_carryover="Full Previous Tail",
+                                audio_feather_ticks=0):
+    """Plan and apply one v1.4 native Masked-AV continuation onto ``target_latent``.
+
+    Pure latent/temporal-constraint work: no clip, no prompt, no tokenization and
+    no disk I/O. ``target_latent`` is the already-constructed empty AV latent for
+    the target segment. The previous latent and handover metadata are never
+    modified.
+
+    Returns ``(masked_latent, actual_context_frames, ignored_tail, info, details)``
+    where ``details`` carries the upstream plan dicts for callers that need them
+    (for example an external-conditioning node assembling its own diagnostics).
+    """
+    context_request = int(masked_context_frames)
+    duration_plan = masked_av_duration_plan(duration, context_request, duration_mode)
+    frame_count = int(duration_plan["total_frame_count"])
+
+    prev_video, _ = _streams_from_latent(previous_latent)
+    previous_frame_count = pixel_frames(prev_video.shape[2])
+
+    if not isinstance(handover, dict) or not handover.get("available"):
+        raise ValueError(
+            "v1.4 Continue requires H3_CONTINUOUS_HANDOVER metadata for the previous clip. "
+            "Connect the handover output from Load AV Latent or the previous v1.4 Auto Handover node."
+        )
+    meta_frames = int(handover.get("frame_count", previous_frame_count))
+    if meta_frames != previous_frame_count:
+        raise ValueError(
+            f"previous handover frame_count {meta_frames} != previous latent frame_count {previous_frame_count}"
+        )
+    safe_end = int(handover.get("handover_end_frame", -1))
+    if safe_end < 0 or safe_end >= previous_frame_count:
+        raise ValueError(f"invalid previous safe handover endpoint {safe_end} for {previous_frame_count} frames")
+    if safe_end < 38:
+        raise ValueError(
+            f"safe handover frame {safe_end} is too early for the minimum 39-frame Masked-AV context"
+        )
+
+    # The freeze-safe video boundary remains the source of truth: never carry the unusable
+    # FL2VA freeze/brightness tail into the next protected VIDEO context.
+    sl = masked_av_context_slice(
+        prev_video.shape[2], context_request, frame_count,
+        ideal_last_frame=safe_end,
+    )
+    actual_source_end = int(sl["source_end_frame"] - 1)
+    if actual_source_end != safe_end:
+        raise ValueError(
+            "previous handover is not aligned to the selected Masked-AV context. "
+            f"Metadata keeps frame {safe_end}, but {context_request}f context would end at {actual_source_end}. "
+            "Re-run the clip with v1.4 Auto Handover (or use the default 39f context)."
+        )
+
+    target_video, _ = _streams_from_latent(target_latent)
+    if tuple(prev_video.shape[-2:]) != tuple(target_video.shape[-2:]):
+        raise ValueError(
+            "Previous latent resolution differs from the requested target resolution. "
+            f"Previous video latent grid {tuple(prev_video.shape[-2:])}, target grid {tuple(target_video.shape[-2:])}."
+        )
+
+    masked_latent, a0, a1, audio_steps, audio_plan = _masked_av_latent(
+        target_latent, previous_latent, sl,
+        audio_tail_mode=audio_tail_carryover, audio_feather_ticks=audio_feather_ticks,
+    )
+
+    actual_context_frames = int(sl["actual_context_frames"])
+    ignored_tail = int(sl["ignored_tail_frames"])
+    extra_audio_ticks = int(audio_plan["extra_tail_ticks"])
+    info = (
+        f"continuation=native_masked_av_safe_handover_audio_tail | "
+        f"safe VIDEO source {sl['source_start_frame']}..{sl['source_end_frame'] - 1} "
+        f"of {sl['previous_frame_count']} (excluded unusable video tail {ignored_tail}f) | "
+        f"video latent {sl['start_t']}:{sl['end_t']} "
+        f"({sl['context_steps']} steps / {actual_context_frames} protected frames; requested {context_request}) | "
+        f"AUDIO policy={audio_plan['mode']} source frames {audio_plan['source_start_frame']}..{audio_plan['audio_source_end_frame'] - 1} "
+        f"-> latent {a0}:{a1} ({audio_steps} ticks; +{extra_audio_ticks} ticks/{audio_plan['extra_tail_seconds']:.3f}s beyond visual handover; "
+        f"feather {max(0, min(int(audio_feather_ticks), audio_steps))}) | "
+        f"duration={duration_plan['duration_mode']} -> total {frame_count}f/{duration_plan['total_seconds']:.3f}s, "
+        f"new VIDEO body {frame_count - actual_context_frames}f/{(frame_count - actual_context_frames) / FPS:.3f}s | "
+        f"video remains freeze/brightness-safe; audio may continue independently through valid original tail"
+    )
+    details = {
+        "frame_count": frame_count,
+        "duration_plan": duration_plan,
+        "slice": sl,
+        "audio_plan": audio_plan,
+        "audio_start_tick": a0,
+        "audio_end_tick": a1,
+        "audio_steps": audio_steps,
+        "context_request": context_request,
+        "previous_frame_count": previous_frame_count,
+        "safe_handover_end_frame": safe_end,
+    }
+    return masked_latent, actual_context_frames, ignored_tail, info, details
+
+
 class H3ContinuousContinueV14(H3ContinuousContinueV13):
     @classmethod
     def INPUT_TYPES(cls):
@@ -1572,44 +1740,12 @@ class H3ContinuousContinueV14(H3ContinuousContinueV13):
             qwen_reference_indices=qwen_indices,
         )
 
+        comfy_version = _require_masked_av_support()
+        # Resolve the duration plan first: the target latent must exist before the
+        # shared Masked-AV planner can slice/mask it.
         context_request = int(masked_context_frames)
         duration_plan = masked_av_duration_plan(duration, context_request, duration_mode)
         frame_count = int(duration_plan["total_frame_count"])
-        comfy_version = _require_masked_av_support()
-        prev_video, _ = _streams_from_latent(previous_latent)
-        previous_frame_count = pixel_frames(prev_video.shape[2])
-
-        if not isinstance(handover, dict) or not handover.get("available"):
-            raise ValueError(
-                "v1.4 Continue requires H3_CONTINUOUS_HANDOVER metadata for the previous clip. "
-                "Connect the handover output from Load AV Latent or the previous v1.4 Auto Handover node."
-            )
-        meta_frames = int(handover.get("frame_count", previous_frame_count))
-        if meta_frames != previous_frame_count:
-            raise ValueError(
-                f"previous handover frame_count {meta_frames} != previous latent frame_count {previous_frame_count}"
-            )
-        safe_end = int(handover.get("handover_end_frame", -1))
-        if safe_end < 0 or safe_end >= previous_frame_count:
-            raise ValueError(f"invalid previous safe handover endpoint {safe_end} for {previous_frame_count} frames")
-        if safe_end < 38:
-            raise ValueError(
-                f"safe handover frame {safe_end} is too early for the minimum 39-frame Masked-AV context"
-            )
-
-        # The freeze-safe video boundary remains the source of truth: never carry the unusable
-        # FL2VA freeze/brightness tail into the next protected VIDEO context.
-        sl = masked_av_context_slice(
-            prev_video.shape[2], context_request, frame_count,
-            ideal_last_frame=safe_end,
-        )
-        actual_source_end = int(sl["source_end_frame"] - 1)
-        if actual_source_end != safe_end:
-            raise ValueError(
-                "previous handover is not aligned to the selected Masked-AV context. "
-                f"Metadata keeps frame {safe_end}, but {context_request}f context would end at {actual_source_end}. "
-                "Re-run the clip with v1.4 Auto Handover (or use the default 39f context)."
-            )
 
         # Keep v1.3's flexible FL2VA/Qwen presentation unchanged. The protected
         # prefix itself is not a Picture; it lives directly in the target latent.
@@ -1618,27 +1754,14 @@ class H3ContinuousContinueV14(H3ContinuousContinueV13):
             None, last_frame, ref_image_size=ref_image_size,
             reference_image=None, qwen_references=qwen_references,
         )
-        target_latent, a0, a1, audio_steps, audio_plan = _masked_av_latent(
-            target_latent, previous_latent, sl,
-            audio_tail_mode=audio_tail_carryover, audio_feather_ticks=audio_feather_ticks,
+        target_latent, actual_context_frames, ignored_tail, info, _details = plan_masked_av_continuation(
+            previous_latent, handover, target_latent, width, height, duration,
+            masked_context_frames=masked_context_frames,
+            duration_mode=duration_mode,
+            audio_tail_carryover=audio_tail_carryover,
+            audio_feather_ticks=audio_feather_ticks,
         )
-
-        actual_context_frames = int(sl["actual_context_frames"])
-        ignored_tail = int(sl["ignored_tail_frames"])
-        extra_audio_ticks = int(audio_plan["extra_tail_ticks"])
-        info = (
-            f"continuation=native_masked_av_safe_handover_audio_tail | ComfyUI {comfy_version} | "
-            f"safe VIDEO source {sl['source_start_frame']}..{sl['source_end_frame'] - 1} "
-            f"of {sl['previous_frame_count']} (excluded unusable video tail {ignored_tail}f) | "
-            f"video latent {sl['start_t']}:{sl['end_t']} "
-            f"({sl['context_steps']} steps / {actual_context_frames} protected frames; requested {context_request}) | "
-            f"AUDIO policy={audio_plan['mode']} source frames {audio_plan['source_start_frame']}..{audio_plan['audio_source_end_frame'] - 1} "
-            f"-> latent {a0}:{a1} ({audio_steps} ticks; +{extra_audio_ticks} ticks/{audio_plan['extra_tail_seconds']:.3f}s beyond visual handover; "
-            f"feather {max(0, min(int(audio_feather_ticks), audio_steps))}) | "
-            f"duration={duration_plan['duration_mode']} -> total {frame_count}f/{duration_plan['total_seconds']:.3f}s, "
-            f"new VIDEO body {frame_count - actual_context_frames}f/{(frame_count - actual_context_frames) / FPS:.3f}s | "
-            f"video remains freeze/brightness-safe; audio may continue independently through valid original tail"
-        )
+        info = f"{info} | ComfyUI {comfy_version}"
         _LOG.info("h3_continuous: %s", info)
         return (cond, target_latent, actual_context_frames, ignored_tail, info, picture_map)
 
@@ -2223,6 +2346,35 @@ def _decode_saved_av(video_vae, audio_vae, video_latent, audio_latent):
     return images, {"waveform": waveform, "sample_rate": sr}
 
 
+def _saved_chain_fingerprint(latent_prefix, first_clip):
+    """Fingerprint the saved-chain files a stitch run would read.
+
+    The stitcher reads its input files directly from disk, so it has no graph
+    dependency on the Save AV Latent node that produces them. Without a
+    file-state fingerprint ComfyUI would cache the stitcher's result from an
+    earlier (possibly premature) run and silently skip the real join. Folding
+    the file mtime/size into IS_CHANGED makes the node re-run exactly when the
+    chain it reads changes.
+    """
+    parts = []
+    index = int(first_clip)
+    while True:
+        try:
+            path = _saved_chain_file(latent_prefix, index)
+        except (FileNotFoundError, ValueError) as exc:
+            parts.append(f"{index}:missing({type(exc).__name__})")
+            break
+        try:
+            stat = os.stat(path)
+            parts.append(f"{index}:{os.path.basename(path)}:{stat.st_mtime_ns}:{stat.st_size}")
+        except OSError as exc:
+            parts.append(f"{index}:stat-error({exc})")
+        index += 1
+        if index > int(first_clip) + 10000:
+            break
+    return "|".join(parts)
+
+
 class H3ContinuousStitchSavedChainV11:
     @classmethod
     def INPUT_TYPES(cls):
@@ -2263,6 +2415,14 @@ class H3ContinuousStitchSavedChainV11:
     OUTPUT_NODE = True
     CATEGORY = "Herrgotts H3 Infinite Continuation Suite"
     DESCRIPTION = "v1.2 memory-bounded saved-chain stitcher. Uses Safe Tail Bridge plus short context-aligned video/audio seam smoothing and encodes directly to MP4 so peak memory does not grow with chain length."
+
+    @classmethod
+    def IS_CHANGED(cls, latent_prefix="h3_continuous/clip", first_clip=1, **kwargs):
+        # This node reads the saved chain straight from disk, so it has no graph
+        # dependency on the Save AV Latent node that produces it. Folding the
+        # files' state into the cache key makes it re-run when the chain changes
+        # instead of replaying an earlier (possibly premature) skip.
+        return _saved_chain_fingerprint(latent_prefix, first_clip)
 
     def stitch(self, video_vae, audio_vae, latent_prefix="h3_continuous/clip",
                first_clip=1, last_clip=0, filename_prefix="video/Herrgotts_H3_Infinite_Stitched",
@@ -2747,6 +2907,16 @@ NODE_CLASS_MAPPINGS = {
     "H3ContinuousTrim": H3ContinuousTrim,
 }
 
+# External-conditioning nodes live in their own module; registered through this
+# package's single mapping so __init__.py stays unchanged and the pack still
+# replaces the upstream install under the same node-root directory name.
+from .external_conditioning import (  # noqa: E402  (must follow the definitions above)
+    NODE_CLASS_MAPPINGS as EXTERNAL_CONDITIONING_CLASS_MAPPINGS,
+    NODE_DISPLAY_NAME_MAPPINGS as EXTERNAL_CONDITIONING_DISPLAY_NAME_MAPPINGS,
+)
+
+NODE_CLASS_MAPPINGS.update(EXTERNAL_CONDITIONING_CLASS_MAPPINGS)
+
 NODE_DISPLAY_NAME_MAPPINGS = {
     "H3ContinuousStartV14": "H3 Infinite - Flexible Start / Conditioning v1.4",
     "H3ContinuousContinueV14": "H3 Infinite - Continue — Native Masked AV v1.4",
@@ -2774,3 +2944,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "H3ContinuousAnalyzeHandover": "H3 Continuous - Auto Handover Analyzer (Legacy v0.x)",
     "H3ContinuousTrim": "H3 Continuous - Trim Rendered Output (Legacy)",
 }
+
+NODE_DISPLAY_NAME_MAPPINGS.update(EXTERNAL_CONDITIONING_DISPLAY_NAME_MAPPINGS)

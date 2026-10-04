@@ -1,4 +1,7 @@
 {
+  "H3ContinuousStartExternalConditioning": "Segment 1 from already encoded H3 conditioning: builds the H3 AV latent and optional First/Last temporal anchors with no CLIP, prompt or tokenization. Fantastic's RefMod Text Encode owns prompt and reference encoding.",
+  "H3ContinuousContinueExternalConditioning": "Segment 2+ from already encoded H3 conditioning plus the previous segment's full sampled AV latent and v1.4 safe handover metadata. Reuses the v1.4 native Masked-AV protected context, per-stream masks and planner unchanged.",
+  "H3ContinuousHandoverStub": "Neutral 'no handover' value for lazy-gated state-machine flows whose real handover producer must not execute.",
   "H3ContinuousStartV14": "v1.4 flexible Start/Conditioning node. Start behavior remains v1.3-compatible; Native Masked AV is used for continuation only.",
   "H3ContinuousContinueV14": "v1.4 Native Masked AV continuation: preserves the freeze/brightness-safe video context, defaults Duration to Net New Content, and can independently protect the previous full audio tail for dialogue continuity.",
   "H3ContinuousAnalyzeHandoverV14": "v1.4 handover analyzer: detects the unusable final landing and snaps the safe visual endpoint to the exact Masked-AV video boundary shared by Stitch Ready and the next protected video context.",

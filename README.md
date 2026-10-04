@@ -123,46 +123,6 @@ The supplied generation workflows include **Patch Sage Attention KJ** as an opti
 
 SageAttention is **not required** for continuation. If it causes instability or OOMs in your setup, disable/bypass it.
 
-## Usage
-
-### Included workflows
-
-The `examples/` folder contains four annotated v1.4 workflows:
-
-**1. Start — `Herrgotts_H3_Infinite_v1.4_01_Start.json`**  
-Creates Clip 1 with flexible T2VA/I2VA/L2VA/FL2VA conditioning. First/Last Frames are optional; the example keeps First + Last connected because repeated endpoints are the recommended quality-reset workflow.
-
-**2. Continue — `Herrgotts_H3_Infinite_v1.4_02_Continue.json`**  
-Loads a manually selected previous AV latent **plus its Handover metadata** and creates Clip 2+. The safe 39-frame video run ending before the unusable landing tail is copied into the new target and protected by the native video mask. By default, audio starts at the same source point but can stay protected through the previous full audio tail. `Net New Content` is the default Duration mode. Add a new Last Frame and/or Qwen References as desired.
-
-**3. 3-Clip Showcase / Auto Stitch — `Herrgotts_H3_Infinite_v1.4_03_3Clip_Showcase_AutoStitch.json`**  
-Runs Start -> Masked Continue -> Masked Continue in one queue and automatically creates a stitched final video. Additional continuation blocks can be duplicated for Clip 4+.
-
-**4. Stitch Saved Chain — `Herrgotts_H3_Infinite_v1.4_04_Stitch_Saved_Chain.json`**  
-Combines manually numbered clips generated separately. The stitcher decodes one saved AV latent at a time, so peak memory does not scale like one giant decoded all-clips batch. v1.4 chains use the exact shared video boundary; older experimental v1.4 metadata still retains its compatibility offset path.
-
-See [`examples/README.md`](examples/README.md) for a compact workflow guide.
-
-### Recommended v1.4 baseline
-
-Recommended starting settings:
-
-```text
-ComfyUI: current build with native PR #15375 H3 AV-mask support
-Continuation: H3ContinuousContinueV14 / Native Masked AV
-Masked video context: 39 frames
-Duration Mode: Net New Content
-Audio Tail Carryover: Full Previous Tail
-Audio feather: 0 ticks
-Auto Handover: Balanced
-Safe Tail Bridge: 0 (Advanced legacy fallback)
-Video crossfade: 4 frames
-Audio de-click crossfade: 15 ms
-Boundary luminance matching: Off (Advanced legacy fallback)
-```
-
-With `Net New Content = 5 s`, v1.4 chooses 158 total H3 frames for a 39-frame head, leaving **119 newly generated frames (~4.96 s)**. With `Total Generation = 5 s`, the old 124-total-frame behavior remains and leaves 85 new frames (~3.54 s).
-
 ## Prompting Guidance
 
 For the best long-form control, treat each segment like a short storyboard transition:
@@ -265,6 +225,63 @@ Picture 3 = Qwen Reference 2
 The `picture_map` output and console log show the actual mapping for each run.
 
 Qwen References are Qwen text/vision inputs only; they are not inserted into `minimax_refs` as persistent native Ref2VA/DiT reference latents.
+
+## External Conditioning (Fantastic RefMods)
+
+Two nodes in the `Herrgotts H3 Infinite Continuation Suite/External Conditioning` category let the suite run **without owning a text encoder**:
+
+| Node | Class ID | Purpose |
+| --- | --- | --- |
+| **H3 Start — External Conditioning** | `H3ContinuousStartExternalConditioning` | First segment: build the H3 AV latent + optional First/Last temporal anchors from already encoded conditioning. |
+| **H3 Continue — External Conditioning** | `H3ContinuousContinueExternalConditioning` | Next segment: the same, plus the v1.4 protected Masked-AV context from the previous segment's saved latent and handover metadata. |
+
+Fantastic's **RefMod Text Encode** owns the prompt, the RefMod bundle, the stored reference images and the `reference_map`. These nodes take that `conditioning` and own the generation latent only. They call **no** tokenizer and never import Fantastic; Fantastic's own `latent` output is unused, and its `length` does not decide the segment length — `duration` on these nodes does.
+
+First/Last Frame here are **temporal anchors only**: they are VAE-encoded into the latent and are *not* shown to the text encoder, so they never become `<Picture N>`. To have the encoder inspect an endpoint image, present it through Fantastic before encoding.
+
+Scene continuity across separately submitted segments uses one more piece: the Stitch Output nodes expose a **`last_frame`** output — the exact post-trim join frame. Save it in job 1 and load it in job 2's Media Loader (`… [output]` path) so the text encoder sees the previous scene as `<Picture 1>`, and phrase the continuation prompt as continuing the same camera move with no cut. The masked-AV context anchors only the protected head; without a scene picture the continuation body can still drift into an unrelated scene. The shipped three-job split (`examples/` + `workflows/job*_api.json`) wires this end to end.
+
+Full details, socket tables, prerequisites, examples and rollback: see [EXTERNAL_CONDITIONING.md](EXTERNAL_CONDITIONING.md).
+
+## Usage
+
+### Included workflows
+
+The `examples/` folder contains four annotated v1.4 workflows:
+
+**1. Start — `Herrgotts_H3_Infinite_v1.4_01_Start.json`**  
+Creates Clip 1 with flexible T2VA/I2VA/L2VA/FL2VA conditioning. First/Last Frames are optional; the example keeps First + Last connected because repeated endpoints are the recommended quality-reset workflow.
+
+**2. Continue — `Herrgotts_H3_Infinite_v1.4_02_Continue.json`**  
+Loads a manually selected previous AV latent **plus its Handover metadata** and creates Clip 2+. The safe 39-frame video run ending before the unusable landing tail is copied into the new target and protected by the native video mask. By default, audio starts at the same source point but can stay protected through the previous full audio tail. `Net New Content` is the default Duration mode. Add a new Last Frame and/or Qwen References as desired.
+
+**3. 3-Clip Showcase / Auto Stitch — `Herrgotts_H3_Infinite_v1.4_03_3Clip_Showcase_AutoStitch.json`**  
+Runs Start -> Masked Continue -> Masked Continue in one queue and automatically creates a stitched final video. Additional continuation blocks can be duplicated for Clip 4+.
+
+**4. Stitch Saved Chain — `Herrgotts_H3_Infinite_v1.4_04_Stitch_Saved_Chain.json`**  
+Combines manually numbered clips generated separately. The stitcher decodes one saved AV latent at a time, so peak memory does not scale like one giant decoded all-clips batch. v1.4 chains use the exact shared video boundary; older experimental v1.4 metadata still retains its compatibility offset path.
+
+See [`examples/README.md`](examples/README.md) for a compact workflow guide.
+
+### Recommended v1.4 baseline
+
+Recommended starting settings:
+
+```text
+ComfyUI: current build with native PR #15375 H3 AV-mask support
+Continuation: H3ContinuousContinueV14 / Native Masked AV
+Masked video context: 39 frames
+Duration Mode: Net New Content
+Audio Tail Carryover: Full Previous Tail
+Audio feather: 0 ticks
+Auto Handover: Balanced
+Safe Tail Bridge: 0 (Advanced legacy fallback)
+Video crossfade: 4 frames
+Audio de-click crossfade: 15 ms
+Boundary luminance matching: Off (Advanced legacy fallback)
+```
+
+With `Net New Content = 5 s`, v1.4 chooses 158 total H3 frames for a 39-frame head, leaving **119 newly generated frames (~4.96 s)**. With `Total Generation = 5 s`, the old 124-total-frame behavior remains and leaves 85 new frames (~3.54 s).
 
 ## Included Nodes
 
